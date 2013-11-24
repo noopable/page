@@ -1,0 +1,33 @@
+{
+    "name": "noopable/page",
+    "description": "page module for ZF2 Application",
+    "type": "zf2-local-module",
+    "license": "BSD-3-Clause",
+    "keywords": [
+        "zf2"
+    ],
+    "authors": [
+        {
+            "name": "Tomoaki Kosugi",
+            "email": "kipspro@gmail.com"
+        }
+    ],
+    "repositories": [
+        {
+            "type": "git",
+            "url": "git@github.com/noopable/np-composer-installer.git"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.10"
+    },
+    "autoload": {
+        "psr-0": {
+            "Page\\": "src/",
+            "PageTest\\": "tests/"
+        },
+        "classmap": [
+            "./Module.php"
+        ]
+    }
+}
