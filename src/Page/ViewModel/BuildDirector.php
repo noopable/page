@@ -74,7 +74,7 @@ class BuildDirector {
             
             $state->setFlag($state::PREPARE_VIEW_MODEL);
             if (! $template = $viewModel->getTemplate()) {
-                trigger_error("template not found in " . $current->getName(), E_USER_WARN);
+                trigger_error("template not found in " . $current->getName(), E_USER_WARNING);
             }
             return $recursive;
         };
