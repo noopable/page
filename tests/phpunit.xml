@@ -1,0 +1,7 @@
+<phpunit bootstrap="./Bootstrap.php" colors="false">
+    <testsuites>
+        <testsuite name="Page Module Suite">
+            <directory>./PageTest</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>
