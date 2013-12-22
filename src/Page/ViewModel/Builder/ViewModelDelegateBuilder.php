@@ -1,6 +1,7 @@
 <?php
 namespace Page\ViewModel\Builder;
 use Page\Block\BlockInterface;
+use Page\ServiceDependency;
 /**
  * Description of ViewModelDelegateBuilder
  *
