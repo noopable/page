@@ -1,8 +1,17 @@
 <?php
+
+/**
+ *
+ * @copyright Copyright (c) 2013-2014 KipsProduction (http://www.kips.gr.jp)
+ * @license   http://www.kips.gr.jp/newbsd/LICENSE.txt New BSD License
+ */
+
 namespace Page\Builder;
+
 use Page\ServiceDependency;
 use Page\BlockPluginManager;
 use Page\Block\BlockInterface;
+
 /**
  * Description of BlockBuilder
  *
@@ -114,4 +123,10 @@ class BlockBuilder implements BlockBuilderInterface {
     public function __invoke() {
         return call_user_func_array(array($this, 'insert'), func_get_args());
     }
+
+    public function thisBlock()
+    {
+        return $this->block;
+    }
+
 }
