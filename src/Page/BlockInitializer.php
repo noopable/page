@@ -1,7 +1,7 @@
 <?php
 namespace Page;
 /*
- * 
+ *
  */
 use Zend\ServiceManager\InitializerInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
@@ -23,15 +23,15 @@ class BlockInitializer implements InitializerInterface, ServiceLocatorAwareInter
      * @var SplObjectStorage
      */
     protected $in_process;
-    
+
     protected $creationOptions;
-    
+
     /**
      *
      * @var BlockPluginManager
      */
     protected $blocks;
-    
+
     public function __construct(Service $service)
     {
         $this->service = $service;
@@ -39,16 +39,16 @@ class BlockInitializer implements InitializerInterface, ServiceLocatorAwareInter
         $this->instances = array();
         $this->creationOptions = array();
     }
-    
+
     /**
-     * 
+     *
      * @param type $options
      */
     public function setCreationOptions($options)
     {
         $this->creationOptions = $options;
     }
-    
+
     public function initialize($block, ServiceLocatorInterface $serviceLocator){
         if (! $block instanceof BlockInterface) {
             throw new Exception\RuntimeException(sprintf(
@@ -57,29 +57,29 @@ class BlockInitializer implements InitializerInterface, ServiceLocatorAwareInter
                 __NAMESPACE__
             ));
         }
-        
+
         if ($this->in_process->offsetExists($block)) {
-            throw new RuntimeException('speicified block is now constructing. a recursion detected. check your block build configuration');
+            throw new Exception\RuntimeException('speicified block is now constructing. a recursion detected. check your block build configuration');
         }
-        
+
         $name = @$this->creationOptions['name'];
-        
+
         $this->in_process->attach($block, true);
-        
+
         $state = $block->getState();
         try {
             if (! $state->checkFlag($state::CONFIGURED)) {
                 $block->configure($this->creationOptions);
                 $state->setFlag($state::CONFIGURED);
             }
-            
+
             $this->creationOptions = array();
-            
+
             if (! $state->checkFlag($state::INITIALIZED)) {
                 $builder = $this->service->getBuilderFactory()
                             ->getBlockBuilderFromBlock($block);
                 /**
-                 * 
+                 *
                  */
                 if ($builder instanceof Builder\BlockBuilderInterface) {
                     $builder->build($block);
@@ -96,7 +96,7 @@ class BlockInitializer implements InitializerInterface, ServiceLocatorAwareInter
 
         $this->in_process->detach($block);
     }
-    
+
     public function getBlocks()
     {
         if (!isset($this->blocks)) {
