@@ -10,16 +10,16 @@ use Serializable;
 class BlockList implements Countable, IteratorAggregate, Serializable
 {
     protected $innerIterator;
-    
+
     protected $parent;
-    
+
     protected $recursiveIterator;
 
     public function __construct(BlockInterface $parent)
     {
         $this->parent = $parent;
     }
-    
+
     public function getBlockListIterator()
     {
         if (!isset($this->recursiveIterator)) {
@@ -32,7 +32,7 @@ class BlockList implements Countable, IteratorAggregate, Serializable
     {
         return isset($this->items[$name]);
     }
-    
+
     public function byName($name = null)
     {
         if (null === $name) {
@@ -50,18 +50,12 @@ class BlockList implements Countable, IteratorAggregate, Serializable
     {
         return $this->parent;
     }
-    
+
     public function insert(BlockInterface $block)
     {
         $priority = (int) $block->getOrder();
         $name = (string) $block->getName();
-        if (isset($this->items[$name])) {
-            $e = new Exception\DuplicatedBlockNameException('specified name ' . $name . ' is duplicated');
-            $e->setBlockName($name);
-            $e->setParent($this->getParent());
-            throw $e;
-        }
-        
+
         $this->items[$name] = array(
             'data'     => $block,
             'priority' => $priority,
@@ -69,29 +63,29 @@ class BlockList implements Countable, IteratorAggregate, Serializable
         $this->getQueue()->insert($block, $priority);
         return $this;
     }
-    
+
     public function remove($block)
     {
         if ($block instanceof Block) {
             return $this->removeBlock($block);
         }
-        
+
         if (is_string($block)) {
             return $this->removeByName($block);
         }
-        
+
     }
-    
+
     public function removeByName($name)
     {
         if (isset($this->items[$name])) {
             $datum = $this->items[$name]['data'];
         }
-        
+
         return $this->removeBlock($datum);
-        
+
     }
-    
+
     public function exchangeArray($array)
     {
         $newArray = array_filter($array, function ($var){return ($var instanceof Block);});
