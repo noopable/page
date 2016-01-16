@@ -11,7 +11,7 @@ use Zend\View\Model\ViewModel;
  * @author tomoaki
  */
 class ServiceSubscriber implements ListenerAggregateInterface {
-    
+
     /**
      * @var \Zend\Stdlib\CallbackHandler[]
      */
@@ -22,14 +22,14 @@ class ServiceSubscriber implements ListenerAggregateInterface {
      * @var \Page\Service
      */
     protected $service;
-    
+
     protected $sharedEventAttached;
-    
+
     public function __construct(Service $service)
     {
         $this->service = $service;
     }
-    
+
     /**
      * Attach to an event manager
      *
@@ -38,44 +38,44 @@ class ServiceSubscriber implements ListenerAggregateInterface {
      */
     public function attach(EventManagerInterface $events, $priority = 1)
     {
-        $this->listeners[] = $events->attach(MvcEvent::EVENT_ROUTE, array($this->service, 'onRoute'), $priority);
+        $this->listeners[] = $events->attach(MvcEvent::EVENT_ROUTE, array($this->service, 'onRoute'), -100); //afterRoute
         $this->listeners[] = $events->attach(MvcEvent::EVENT_DISPATCH, array($this->service, 'postDispatch'), -10); //postDispatch
-        
+
         // @deprecated
         // $this->listeners[] = $events->attach(MvcEvent::EVENT_DISPATCH, array($this->service, 'preDispatch'), 5);
-        
+
         /**
-         * 
+         *
          * @see \Zend\Mvc\View\Http\ExceptionStrategy
          *         $this->listeners[] = $events->attach(MvcEvent::EVENT_DISPATCH_ERROR, array($this, 'prepareExceptionViewModel'));
          *         $this->listeners[] = $events->attach(MvcEvent::EVENT_RENDER_ERROR, array($this, 'prepareExceptionViewModel'));
-         * 
+         *
          * ExceptionStrategyは例外処理に関して、例外処理用のテンプレートを使って、
          * 例外を含むViewModelを準備する。
-         * 
+         *
          * @see \Zend\Mvc\View\HttpViewManager
          *         $events->attach(MvcEvent::EVENT_DISPATCH_ERROR, array($injectViewModelListener, 'injectViewModel'), -100);
          *         $events->attach(MvcEvent::EVENT_RENDER_ERROR, array($injectViewModelListener, 'injectViewModel'), -100);
-         * 
+         *
          * injectViewModelで行われるのは、EventResultがViewModelなら、そのViewModelの子モデルを削除して、
          * EventのViewModelにappendする。
-         * 
-         * 
+         *
+         *
          * Pageモジュールは、EventのViewModelを置き換えており、自前でinjectできる。
          * メインのエラー処理部分は、ExceptionStrategyに任せる。
          * もし、ExceptionStrategyを変更したい場合はそちらを別のクラスに置き換える。
-         * 
+         *
          * prepareExceptionViewModelで用意されたViewModelをgetResultから取得し、
          * それを、PageのViewModelに適宜追加した後、PageのViewModelをterminateし、
          * resultとしてセットする。
-         * 
-         * 
+         *
+         *
          * Pageモジュールが行うページブロックは、例外処理以外の部分での修飾を
          * 付け加えることにある。
          * MvcEvent::ViewModelに対して、あらかじめ、エラーのおきにくいViewModel
          * をセットする。
          * $contentに対して、ExceptionStrategyによるレンダリング結果が抽入される。
-         * 
+         *
          *
          */
         $this->listeners[] = $events->attach(MvcEvent::EVENT_DISPATCH_ERROR, array($this->service, 'onDispatchError'), -50); //preError
@@ -96,7 +96,7 @@ class ServiceSubscriber implements ListenerAggregateInterface {
             }
         }
     }
-    
+
     /**
      * Detach problem listeners specified by getListenersToDetach() and return an array of information that will
      * allow them to be reattached.
@@ -130,7 +130,7 @@ class ServiceSubscriber implements ListenerAggregateInterface {
             }
         }
     }
-    
+
     public function utilizeSharedEvent(EventManagerInterface $events, $force = false)
     {
         if ($this->sharedEventAttached && (!$force)) {
