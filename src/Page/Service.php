@@ -1,14 +1,13 @@
 <?php
 namespace Page;
 
-use Zend\ServiceManager\ServiceLocatorAwareInterface;
 use Zend\Stdlib\ArrayUtils;
 use Zend\Mvc\MvcEvent;
 use Zend\View\Model\ViewModel;
 
 use Page\Block\BlockInterface;
 
-class Service implements ServiceLocatorAwareInterface
+class Service
 {
     use ServiceSetterGetter;
     use ProvidesConfigId;
@@ -18,34 +17,34 @@ class Service implements ServiceLocatorAwareInterface
      * @var array
      */
     protected $pages;
-    
+
     /**
      *
      * @var string currentPageName
      */
     protected $currentPage;
-    
+
     /**
      *
      * @var array
      */
     protected $blockConfig = array();
-    
+
     /**
      *
      * @var bool
      */
     protected $init = false;
-    
+
     /**
      *
      * @var bool
      */
     protected $active = false;
-    
+
     protected $originalRouteMatch;
-    
-    
+
+
     public function init()
     {
         if ($this->init) {
@@ -53,44 +52,44 @@ class Service implements ServiceLocatorAwareInterface
         }
         $serviceLocator = $this->getServiceLocator();
 
-        
+
         //ここでconfigを取得する必要があるかもしれない。
         //もしくは、initializerをFactoryに移すという考え方もありうる。どうする？
         $config = $serviceLocator->get('Config')[$this->getConfigId()];
-        
+
         $blockPlugins = $serviceLocator->get($config['blocks_service_name']);
-        
+
         $this->setBlocks($blockPlugins);
-        
+
         if (isset($config['config_loader'])) {
             $configLoader = $serviceLocator->get($config['config_loader_name']);
             if ($configLoader instanceof \Page\Config\Loader\ConfigLoaderInterface) {
                 $this->setConfigLoader($configLoader);
             }
         }
-        
+
         if (isset($config['error_page'])) {
             $this->setErrorPage($config['error_page']);
-            
+
             $application    = $serviceLocator->get('Application');
             $eventManager   = $application->getEventManager();
-            
+
             //Service がinitされ、なおかつerror_pageが設定されているときだけ
             //エラーハンドリングを行う。
             //エラーページを切り替えたい場合は、コントローラーやページから
             //setErrorPageで切りかえる。
             //ただし、エラーハンドリングは十分にテストし、十分にシンプルであるように心掛けること。
-            
+
         }
-        
+
         $this->init = true;
     }
-    
+
     public function subscribe($eventManager)
     {
         $eventManager->attachAggregate($this->getSubscriber());
     }
-    
+
     public function onRoute(MvcEvent $e)
     {
         if ($requestedName = $e->getRouteMatch()->getParam('page', false)) {
@@ -101,7 +100,7 @@ class Service implements ServiceLocatorAwareInterface
             $this->getSubscriber()->utilizeSharedEvent($events);
         }
     }
-    
+
     public function activate($requestedName)
     {
         $this->init();
@@ -109,12 +108,12 @@ class Service implements ServiceLocatorAwareInterface
         $this->loadPage($requestedName);
         $this->active = true;
     }
-    
+
     public function isActivated()
     {
         return $this->active;
     }
-    
+
     public function loadBlockConfig($name, $merge = true)
     {
         //DBからの読み込みを追加・交換する場合、
@@ -124,7 +123,7 @@ class Service implements ServiceLocatorAwareInterface
         if ($configLoader instanceof Config\Loader\ConfigLoaderInterface) {
             $config = $configLoader->load($name);
         }
-        
+
         if ($merge) {
             $origConfig = $this->getBlockConfig($name);
             $config = ArrayUtils::merge($origConfig, $config);
@@ -134,8 +133,8 @@ class Service implements ServiceLocatorAwareInterface
         return $config;
     }
     /**
-     * 
-     * 
+     *
+     *
      * @param string $name
      * @return \Page\Page
      */
@@ -150,7 +149,7 @@ class Service implements ServiceLocatorAwareInterface
             $parentBlock = $e->getParent();
             trigger_error($e->getMessage(), E_USER_WARNING);
             //for instant debug
-            echo "\n<!-- duplicate entry $thrownBlockName in block(" .$parentBlock->getName() . ") -->\n"; 
+            echo "\n<!-- duplicate entry $thrownBlockName in block(" .$parentBlock->getName() . ") -->\n";
             return null;
         }
         catch (Exception\InvalidArgumentException $e) {
@@ -174,31 +173,31 @@ class Service implements ServiceLocatorAwareInterface
             echo $e;
             return null;
         }
-        
+
         if (! $page instanceof BlockInterface) {
             throw new Exception\UnexpectedValueException("page load faild or unexpected type ($name)");
         }
-        
+
         $this->pages[$name] = $page;
         return $page;
     }
-    
+
     public function getBlock($name, $config = array(), $loadConfig = true)
     {
         if ((false !== $config) && $loadConfig) {
             $this->loadBlockConfig($name);
             $config = ArrayUtils::merge($this->getBlockConfig($name), (array) $config);
         }
-        
+
         return $this->getBlocks()->get($name, $config);
     }
-    
+
     public function getBlockConfig($name)
     {
         $config =  isset($this->blockConfig[$name]) ? $this->blockConfig[$name] : array();
         return $config;
     }
-    
+
     public function setBlockConfig(array $config, $merge = true)
     {
         if ($merge && count($this->blockConfig)) {
@@ -208,36 +207,36 @@ class Service implements ServiceLocatorAwareInterface
 
         return $this;
     }
-    
+
     public function getPage($name = null)
     {
         $this->init();
         if (null === $name) {
             $name = $this->getCurrentPage();
         }
-        
+
         if (! isset($this->pages[$name])) {
             $page = $this->loadPage($name);
             if (null === $page) {
                 throw new Exception\UnexpectedValueException("page load faild ($name)");
             }
-            
+
             if (! $page instanceof BlockInterface) {
                 throw new Exception\UnexpectedValueException("unexpected type ($name)");
             }
         }
-        
+
         return $this->pages[$name];
     }
-    
+
     public function setCurrentPage($currentPage)
     {
         $this->currentPage = $currentPage;
     }
-    
+
     /**
      * エラーが発生するとエラーページに切り替わることがある
-     * 
+     *
      * @return string
      */
     public function getCurrentPage()
@@ -247,9 +246,9 @@ class Service implements ServiceLocatorAwareInterface
         }
         return $this->currentPage;
     }
-    
+
     /**
-     * 
+     *
      * @return ViewModel
      */
     public function buildViewModel()
@@ -259,9 +258,9 @@ class Service implements ServiceLocatorAwareInterface
         $this->utilizeViewHelpers();
         return $model;
     }
-    
+
     /**
-     * 
+     *
      * @deprecated
      * @param \Zend\Mvc\MvcEvent $e
      */
@@ -274,7 +273,7 @@ class Service implements ServiceLocatorAwareInterface
             //$this->getSubscriber()->detachProblemListeners($e);
         }
     }
-    
+
     public function postDispatch(MvcEvent $e)
     {
         if ($this->isActivated()) {
@@ -283,7 +282,7 @@ class Service implements ServiceLocatorAwareInterface
             $e->setViewModel($viewModel);
         }
     }
-    
+
     protected function utilizeViewHelpers()
     {
         $page = $this->getPage();
@@ -295,25 +294,25 @@ class Service implements ServiceLocatorAwareInterface
         }
 
     }
-    
+
     public function setTemplate(BlockInterface $block, $template)
     {
         $block->setOption('template', $template);
     }
-    
+
     public function getTemplate(BlockInterface $block, $detect = false, $delimiter = '/')
     {
         if (! $detect) {
             return $block->getTemplate();
         }
-        
+
         if (! $template = $block->getOption('template', false)) {
             $template = $this->detectTemplate($block, $delimiter);
         }
-        
+
         return $template;
     }
-    
+
     public function detectTemplate(BlockInterface $block)
     {
         $policy = $block->getOption('templatePathPolicy', null);
@@ -344,7 +343,7 @@ class Service implements ServiceLocatorAwareInterface
                 break;
         }
     }
-    
+
     public function getOriginalRouteMatch()
     {
         if (!isset($this->originalRouteMatch)) {
@@ -352,45 +351,45 @@ class Service implements ServiceLocatorAwareInterface
         }
         return $this->originalRouteMatch;
     }
-    
+
     public function onDispatchError(MvcEvent $e)
     {
         $this->init();
-        
+
         $this->setCurrentPage($this->getErrorPage());
         $pageViewModel = $this->buildViewModel();
         //$this->injectViewModel($e);
-        
+
         $result = $e->getResult();
         if ($result instanceof ViewModel) {
             $pageViewModel->addChild($result);
         }
-        
+
         $e->setResult($pageViewModel);
 
     }
-    
+
     public function onRenderError(MvcEvent $e)
     {
         $this->init();
-        
+
         $this->setCurrentPage($this->getErrorPage());
         $pageViewModel = $this->buildViewModel();
         //$this->injectViewModel($e);
-        
+
         if ($e->getError() && $pageViewModel instanceof ClearableModelInterface) {
             $pageViewModel->clearChildren();
         }
-        
+
         $result = $e->getResult();
         if ($result instanceof ViewModel) {
             $pageViewModel->addChild($result);
         }
-        
+
         //$pageViewModel->setTerminal(true);
         $e->setResult($pageViewModel);
 
     }
-    
+
 }
 

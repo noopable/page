@@ -18,12 +18,14 @@ class ServiceFactory  implements FactoryInterface {
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
         $config = $serviceLocator->get('Config')[$this->getConfigId()];
-        
+
         $service = new \Page\Service;
-        
+
+        $service->setServiceLocator($serviceLocator);
+
         $serviceConfig = new ServiceConfig($config);
         $serviceConfig->configure($service);
-        
+
         return $service;
     }
 }
